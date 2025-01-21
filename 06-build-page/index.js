@@ -9,29 +9,31 @@ let array = '';
 
 fs.mkdir(dirPath, {recursive : true}, (err) => {
     if (err)
-        process.stdout.write(err);
+        console.error(err);
     else
         process.stdout.write('Folder "project-dist" created successfully!\n');
+
+    fs.writeFile(htmlFilePath, '', (err) => {
+        if (err)
+            console.error(err);
+        else
+            process.stdout.write('File "index.html" created successfully!\n');
+
+        fs.writeFile(cssFilePath, '', (err) => {
+            if (err)
+                console.error(err);
+            else
+                process.stdout.write('File "style.css" created successfully!\n');
+        });
+    });   
 });
 
-fs.writeFile(htmlFilePath, '', (err) => {
-    if (err)
-        process.stdout.write(err);
-    else
-        process.stdout.write('File "index.html" created successfully!\n');
-});
 
-fs.writeFile(cssFilePath, '', (err) => {
-    if (err)
-        process.stdout.write(err);
-    else
-        process.stdout.write('File "style.css" created successfully!\n');
-});
 
 let index = 1;
 fs.readdir(copyDirPath, (err, files) => {
     if (err)
-        console.log(err);
+        console.error(err);
     else {
         files.forEach(file => {
             index += 1;
@@ -45,7 +47,7 @@ fs.readdir(copyDirPath, (err, files) => {
 
                 readStream.on('end', () => {
                     if (index > files.length) {
-                        const writeStream = fs.createWriteStream(addFilePath);
+                        const writeStream = fs.createWriteStream(cssFilePath);
                         writeStream.write(array);
                         writeStream.end();
                     }
@@ -91,3 +93,41 @@ function copyDir(src, dest) {
 }
 
 copyDir(srcDirPath, dirPathAsset);
+let arrayHtml = '';
+const readStreamTem = fs.createReadStream(path.join(__dirname, 'template.html'), {encoding: 'utf-8'});                          
+readStreamTem.on('data', (chunk) => {
+    arrayHtml += chunk;
+})
+
+let i = 1;
+const compDirPath = path.join(__dirname, 'components');
+readStreamTem.on('end', () => {
+    fs.readdir(compDirPath, (err, files) => {
+        if (err)
+            console.error(err);
+        else {
+            files.forEach(file => {
+                const compName = path.basename(file, '.html');
+                const compPath = path.join(compDirPath, file);
+                
+                fs.readFile(compPath, 'utf-8', (err, text) => {
+                    if (err)
+                        console.error(err);
+                    else {
+                        arrayHtml = arrayHtml.replace(new RegExp(`{{${compName}}}`, 'g'), text)
+                    }
+                    i += 1;
+                    
+                    if (i > files.length) {
+                        fs.writeFile(htmlFilePath, arrayHtml, (err) => {
+                            if (err)
+                                console.error(err);
+                            else
+                                process.stdout.write('File "index.html" successfully recorded!');
+                        })
+                    }
+                })
+            })
+        }
+    })
+})
