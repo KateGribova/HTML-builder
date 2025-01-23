@@ -12,14 +12,16 @@ fs.readdir(filesPath, (err, files) => {
         files.forEach(file => {
             index += 1;
             const filePath = path.join(filesPath, file);
-            const filePathStats = fs.statSync(filePath);
-            if (filePathStats.isFile()) {
-                if (index > files.length){
-                    process.stdout.write(file + ' - ' + path.extname(filePath).slice(1) + ' - ' + (filePathStats.size) + ' bytes'); 
+            fs.stat(filePath, (err, filePathStats) => {
+                if (err) console.log(err);
+                else if (filePathStats.isFile()) {
+                    if (index > files.length) {
+                        process.stdout.write(file + ' - ' + path.extname(filePath).slice(1) + ' - ' + (filePathStats.size) + ' bytes');
+                    } else {
+                        process.stdout.write(file + ' - ' + path.extname(filePath).slice(1) + ' - ' + (filePathStats.size) + ' bytes\n');
+                    }
                 }
-                else
-                    process.stdout.write(file + ' - ' + path.extname(filePath).slice(1) + ' - ' + (filePathStats.size) + ' bytes\n');
-            }
-        })
+            });
+        });
     }
 })
